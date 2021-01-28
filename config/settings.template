@@ -1,0 +1,16 @@
+[auth]
+token=mybottoken
+
+[logging]
+path=path
+file=filename.log
+
+[database]
+#MongoDB
+host=host
+name=name
+user=user
+password=password
+
+[metadata]
+version=0.0.1
