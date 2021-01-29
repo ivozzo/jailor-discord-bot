@@ -4,6 +4,7 @@ token=mybottoken
 [logging]
 path=path
 file=filename.log
+level=INFO
 
 [database]
 #MongoDB
