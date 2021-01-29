@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 .idea
 test
-config/settings
+jailor-bot/config/settings
