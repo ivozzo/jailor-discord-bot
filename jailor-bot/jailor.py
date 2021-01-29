@@ -1,7 +1,7 @@
-import modules.functions as functions
-
-import modules.utilities as utilities
 import discord
+
+import modules.functions as functions
+import modules.utilities as utilities
 
 client = discord.Client()
 
