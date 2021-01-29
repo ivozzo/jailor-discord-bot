@@ -26,7 +26,7 @@ def connect_db(host, user, password, database, port):
 #    return collection.find({"group_chat_id": groupId})
 
 
-config_file = 'config/settings'
+config_file = 'jailor-bot/config/settings'
 
 config = read_config(config_file)
 authConfig = config["auth"]
