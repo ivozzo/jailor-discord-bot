@@ -1,7 +1,9 @@
 import sys
 
+from classes.bot_configuration import BotConfiguration
 import modules.configuration as configuration
 import modules.utilities as utilities
+import modules.functions as functions
 from classes.bot import JailorBot
 
 client = JailorBot()
@@ -21,13 +23,20 @@ utilities.logger.debug(f'Argument List: {str(sys.argv)}')
 async def on_ready():
     utilities.logger.info("Currently deployed on:")
     for guild in client.guilds:
-        utilities.logger.info(guild.name)
+        utilities.logger.info(f"- {guild.name}")
+        bot_configuration = functions.read_configuration(guild.id)
+        utilities.logger.debug(f"Retrieved configuration: {str(bot_configuration)}")
 
     utilities.logger.info(f'{client.user} has connected to Discord!')
 
 
 @client.event
 async def on_guild_join(guild):
+    utilities.logger.info(f"Jailor has been added to server {guild.name}")
+    utilities.logger.debug(f"Creating a brand new default configuration for {guild.id}")
+    conf = BotConfiguration(guildId=guild.id)
+    functions.create_configuration(conf)
+
     channel = [x for x in guild.text_channels if "bot" in x.name][0]
     channel = guild.text_channels[0] if not channel else channel
 
@@ -39,9 +48,19 @@ async def on_guild_join(guild):
         utilities.logger.info(f"Writing to guild owner {channel.name})")
 
         user = await client.fetch_user(guild.owner_id)
-        await user.send(tts=False, content=f"Hey there fella, I've just joined your server!"
+        await user.send(tts=False, content=f"Hey there fella, I've just joined your server!\n"
                                            f"Give me visibility on a channel and use the $config command to configure me!")
 
+
+@client.event
+async def on_guild_remove(guild):
+    utilities.logger.info(f"Jailor has been removed from server {guild.name}")
+    utilities.logger.debug(f"Deleting configuration for {guild.id}")
+    functions.remove_configuration(guild.id)
+
+
+utilities.logger.info("Initializing database connection...")
+functions.init_connection()
 
 utilities.logger.info("Bot listening...")
 client.run(token)

@@ -9,7 +9,7 @@ class JailorBot(discord.Client):
         traceback.print_exc()
 
     async def on_message(self, message):
-        utilities.logger.info(message)
+        utilities.logger.debug(message)
         if message.author == self.user:
             return
 
