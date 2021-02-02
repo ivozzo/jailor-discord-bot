@@ -21,12 +21,6 @@ utilities.logger.debug(f'Argument List: {str(sys.argv)}')
 
 @client.event
 async def on_ready():
-    utilities.logger.info("Currently deployed on:")
-    for guild in client.guilds:
-        utilities.logger.info(f"- {guild.name}")
-        bot_configuration = functions.read_configuration(guild.id)
-        utilities.logger.debug(f"Retrieved configuration: {str(bot_configuration)}")
-
     utilities.logger.info(f'{client.user} has connected to Discord!')
 
 
@@ -53,5 +47,4 @@ async def on_guild_remove(guild):
 utilities.logger.info("Initializing database connection...")
 functions.init_connection()
 
-utilities.logger.info("Bot listening...")
 client.run(token)

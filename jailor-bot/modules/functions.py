@@ -19,6 +19,10 @@ def create_configuration(guildId):
         return BotConfiguration.from_dict(previous_bot_configuration)
 
 
+def update_configuration(guildId, item, value):
+    collection = get_configuration_repository()
+    return collection.update_many({"guildId": guildId}, {"$set": {item: value}})
+
 def read_configuration(guildId):
     collection = get_configuration_repository()
     return collection.find_one({"guildId": guildId})
@@ -37,7 +41,6 @@ def get_configuration_repository():
 def connect_db(host, user, password, db, port):
     connection_str = host.replace("<username>", user).replace("<password>", password) \
         .replace("<port>", port).replace("<dbname>", db)
-    print(connection_str)
     client = MongoClient(connection_str)
     return client[db]
 
