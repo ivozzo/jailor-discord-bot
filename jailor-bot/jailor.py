@@ -34,22 +34,13 @@ async def on_ready():
 async def on_guild_join(guild):
     utilities.logger.info(f"Jailor has been added to server {guild.name}")
     utilities.logger.debug(f"Creating a brand new default configuration for {guild.id}")
-    conf = BotConfiguration(guildId=guild.id)
-    functions.create_configuration(conf)
+    conf = functions.create_configuration(guildId=guild.id)
 
-    channel = [x for x in guild.text_channels if "bot" in x.name][0]
-    channel = guild.text_channels[0] if not channel else channel
-
-    if channel.permissions_for(guild.me).send_messages:
-        utilities.logger.info(f"Writing on channel {channel.name})")
-        await channel.send(f"Hey, I'm fresh around here!"
-                           f"use the $config command to start configuring me")
-    else:
-        utilities.logger.info(f"Writing to guild owner {channel.name})")
-
-        user = await client.fetch_user(guild.owner_id)
-        await user.send(tts=False, content=f"Hey there fella, I've just joined your server!\n"
-                                           f"Give me visibility on a channel and use the $config command to configure me!")
+    user = await client.fetch_user(guild.owner_id)
+    utilities.logger.info(f"Writing to guild owner {user.name}")
+    await user.send(tts=False, content=f"Hey there fella, I've just joined your server!\n"
+                                       f"Give me visibility on a channel and use the \"{conf.command_prefix}"
+                                       f" config\" command to start configuring me!")
 
 
 @client.event

@@ -1,14 +1,22 @@
 from pymongo import MongoClient
+from classes.bot_configuration import BotConfiguration
 import modules.configuration as configuration
 import modules.utilities as utilities
 
 database = None
 
 
-def create_configuration(bot_configuration):
+def create_configuration(guildId):
+    previous_bot_configuration = read_configuration(guildId)
     collection = get_configuration_repository()
-    utilities.logger.debug(f"Savinf configuration {str(bot_configuration)} onto {collection}")
-    return collection.insert_one(bot_configuration.to_dict()).inserted_id
+    if not previous_bot_configuration:
+        bot_configuration = BotConfiguration(guildId=guildId)
+        utilities.logger.debug(f"Saving configuration {str(bot_configuration)} onto {collection}")
+        collection.insert_one(bot_configuration.to_dict())
+        return bot_configuration
+    else:
+        utilities.logger.debug(f"Configuration for {str(guildId)} already existing in {collection}")
+        return BotConfiguration.from_dict(previous_bot_configuration)
 
 
 def read_configuration(guildId):
