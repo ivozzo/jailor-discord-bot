@@ -1,9 +1,8 @@
 import discord
-import modules.utilities as utilities
 import modules.functions as functions
-from classes.bot_configuration import BotConfiguration
-
+import modules.utilities as utilities
 import traceback
+from classes.bot_configuration import BotConfiguration
 
 
 class JailorBot(discord.Client):
@@ -29,10 +28,13 @@ class JailorBot(discord.Client):
                 await send_commands_list(prefix=conf.command_prefix, channel=message.channel)
             elif args[1] == "config":
                 await config_manager(args=args, configuration=conf, message=message)
+            elif args[1] == "warn":
+                await warn_user(configuration=conf, context=message, args=args)
             else:
                 await send_error(message.channel)
         else:
             return
+
 
 async def config_manager(args, configuration, message):
     utilities.logger.debug(args)
@@ -51,11 +53,11 @@ async def config_manager(args, configuration, message):
             return
         elif args[2] == "warning_role":
             await update_warning_role(configuration=configuration, context=message,
-                              value_to_update=args[3])
+                                      value_to_update=args[3])
             return
         elif args[2] == "mute_role":
             await update_mute_role(configuration=configuration, context=message,
-                              value_to_update=args[3])
+                                   value_to_update=args[3])
             return
 
     await send_configuration(configuration=configuration, channel=message.channel)
@@ -69,48 +71,64 @@ def clean_role_id(role_id):
     return role_id.replace("<@&", "").replace(">", "")
 
 
+def clean_user_id(user_id):
+    return user_id.replace("<@!", "").replace(">", "")
+
+
+async def warn_user(configuration, context, args):
+    if len(args) > 3:
+        user = await context.guild.fetch_member(clean_user_id(args[2]))
+        if user:
+            embed = get_embed(title="Warning", description=f"You've been warned!", color=discord.Color.gold())
+            embed.add_field(name="Reason", value=f"{args[3]}", inline=False)
+            embed.set_author(name=context.author.name, icon_url=context.author.avatar_url)
+            if configuration.warning_role:
+                await user.add_roles(roles={int(clean_role_id(configuration.warning_role))}, reason=args[3])
+            await user.send(embed=embed)
+
+
 async def update_channel(configuration, context, value_to_update):
     if value_to_update == "disable":
         configuration.command_channel = None
         functions.update_configuration(guildId=configuration.guildId, item="command_channel", value=None)
-        await send_Done(channel=context.channel, description="Command channel disabled")
+        await send_done(channel=context.channel, description="Command channel disabled")
     else:
         if get_channel(context, clean_channel_id(value_to_update)):
             configuration.command_channel = value_to_update
             functions.update_configuration(guildId=configuration.guildId, item="command_channel", value=value_to_update)
-            await send_Done(channel=context.channel, description="Command channel updated")
+            await send_done(channel=context.channel, description="Command channel updated")
 
 
 async def update_role(configuration, context, value_to_update):
     if value_to_update == "disable":
         configuration.role = None
         functions.update_configuration(guildId=configuration.guildId, item="role", value=None)
-        await send_Done(channel=context.channel, description="Role check disabled")
+        await send_done(channel=context.channel, description="Role check disabled")
     else:
         if get_role(context, clean_role_id(value_to_update)) in context.guild.roles:
             configuration.role = value_to_update
             functions.update_configuration(guildId=configuration.guildId, item="role", value=value_to_update)
-            await send_Done(channel=context.channel, description="Role check updated")
+            await send_done(channel=context.channel, description="Role check updated")
 
 
 async def update_warning_role(configuration, context, value_to_update):
     if get_role(context, clean_role_id(value_to_update)) in context.guild.roles:
         configuration.warning_role = value_to_update
         functions.update_configuration(guildId=configuration.guildId, item="warning_role", value=value_to_update)
-        await send_Done(channel=context.channel, description="Role for warned users updated")
+        await send_done(channel=context.channel, description="Role for warned users updated")
 
 
 async def update_mute_role(configuration, context, value_to_update):
     if get_role(context, clean_role_id(value_to_update)) in context.guild.roles:
         configuration.mute_role = value_to_update
         functions.update_configuration(guildId=configuration.guildId, item="mute_role", value=value_to_update)
-        await send_Done(channel=context.channel, description="Role for muted users updated")
+        await send_done(channel=context.channel, description="Role for muted users updated")
 
 
 async def update_prefix(configuration, context, value_to_update):
     configuration.command_prefix = value_to_update
     functions.update_configuration(guildId=configuration.guildId, item="command_prefix", value=value_to_update)
-    await send_Done(channel=context.channel, description="Command prefix updated")
+    await send_done(channel=context.channel, description="Command prefix updated")
 
 
 async def send_error(channel):
@@ -120,7 +138,7 @@ async def send_error(channel):
     await channel.send(embed=embed)
 
 
-async def send_Done(channel, description):
+async def send_done(channel, description):
     title = f"Done"
     embed = get_embed(title=title, description=description, color=discord.Color.dark_green())
     await channel.send(embed=embed)
@@ -157,8 +175,13 @@ async def send_configuration(configuration, channel):
 def get_channel(context, id):
     return [x for x in context.guild.channels if x.id == int(id)][0]
 
+
 def get_role(context, id):
     return [x for x in context.guild.roles if x.id == int(id)][0]
+
+
+def get_user(context, id):
+    return [x for x in context.guild.members if x.id == int(id)][0]
 
 
 def get_embed(title, description, color):
