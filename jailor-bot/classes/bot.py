@@ -18,19 +18,17 @@ class JailorBot(discord.Client):
 
         conf = BotConfiguration.from_dict(functions.read_configuration(message.guild.id))
 
+        if conf.command_channel:
+            if int(clean_channel_id(conf.command_channel)) != message.channel.id:
+                return
+
         if message.content.startswith(conf.command_prefix):
             args = message.content.split()
 
             if args[1] == "help":
                 await send_commands_list(prefix=conf.command_prefix, channel=message.channel)
             elif args[1] == "config":
-                utilities.logger.debug(args)
-                if len(args) > 2:
-                    if args[2] == "command_channel":
-                        if len(args) > 3:
-                            await update_channel(configuration=conf, context=message,
-                                                 value_to_update=args[3])
-                            return
+                await config_manager(args=args, configuration=conf, message=message)
 
                 await send_configuration(configuration=conf, channel=message.channel)
             else:
@@ -38,14 +36,41 @@ class JailorBot(discord.Client):
         else:
             return
 
+async def config_manager(args, configuration, message):
+    utilities.logger.debug(args)
+    if len(args) > 2:
+        if args[2] == "command_channel":
+            if len(args) > 3:
+                await update_channel(configuration=configuration, context=message,
+                                     value_to_update=args[3])
+                return
+        elif args[2] == "command_prefix":
+            if len(args) > 3:
+                await update_prefix(configuration=configuration, context=message,
+                                    value_to_update=args[3])
+                return
+
+def clean_channel_id(channel_id):
+    return channel_id.replace("#", "").replace("<", "").replace(">", "")
+
 
 async def update_channel(configuration, context, value_to_update):
-    channel = get_channel(context, value_to_update.replace("#", "")
-                          .replace("<", "").replace(">", ""))
-    if channel:
-        configuration.command_channel = channel.id
-        functions.update_configuration(guildId=configuration.guildId, item="command_channel", value=value_to_update)
-        await send_Done(channel=context.channel, description="command_channel updated")
+    if value_to_update == "disable":
+        configuration.command_channel = None
+        functions.update_configuration(guildId=configuration.guildId, item="command_channel", value=None)
+        await send_Done(channel=context.channel, description="command_channel disabled")
+    else:
+        channel = get_channel(context, clean_channel_id(value_to_update))
+        if channel:
+            configuration.command_channel = channel.id
+            functions.update_configuration(guildId=configuration.guildId, item="command_channel", value=value_to_update)
+            await send_Done(channel=context.channel, description="command_channel updated")
+
+
+async def update_prefix(configuration, context, value_to_update):
+    configuration.command_prefix = value_to_update
+    functions.update_configuration(guildId=configuration.guildId, item="command_prefix", value=value_to_update)
+    await send_Done(channel=context.channel, description="command_prefix updated")
 
 
 async def send_error(channel):
