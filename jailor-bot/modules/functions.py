@@ -36,16 +36,18 @@ def remove_configuration(guildId):
     return collection.delete_many({"guildId": guildId})
 
 
-def create_penalty(guildId, userId, reason, type):
+def create_penalty(context, user, reason, felony_type):
     collection = get_felony_repository()
-    previous_bot_felony = read_felony(guildId, userId, type.value)
+    previous_bot_felony = read_felony(context.guild.id, user.id, felony_type.value)
     if not previous_bot_felony:
-        bot_felony = BotFelony(guildId=guildId, userId=userId, type=type, reason=reason)
+        bot_felony = BotFelony(guildId=context.guild.id, guildName=context.guild.name, userId=user.id,
+                               userName=user.name, type=felony_type.value, reason=reason, authorId=context.author.id,
+                               authorName=context.author.name)
         utilities.logger.debug(f"Saving felony {str(bot_felony)} onto {collection}")
         collection.insert_one(bot_felony.to_dict())
         return bot_felony
     else:
-        utilities.logger.debug(f"Felony for {str(userId)} in {str(guildId)} already existing in {collection}")
+        utilities.logger.debug(f"Felony for {str(user.id)} in {str(context.guild.id)} already existing in {collection}")
         return BotFelony.from_dict(previous_bot_felony)
 
 

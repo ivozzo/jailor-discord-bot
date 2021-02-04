@@ -3,5 +3,6 @@ from enum import Enum
 
 class FelonyType(Enum):
     WARNING = 1
-    KICK = 2
-    BAN = 3
+    MUTE = 2
+    KICK = 3
+    BAN = 4

@@ -31,6 +31,8 @@ class JailorBot(discord.Client):
                 await config_manager(args=args, configuration=conf, message=message)
             elif args[1] == "warn":
                 await warn_user(configuration=conf, context=message, args=args)
+            elif args[1] == "mute":
+                await mute_user(configuration=conf, context=message, args=args)
             else:
                 await send_error(message.channel, "Command not found!")
         else:
@@ -50,6 +52,8 @@ class JailorBot(discord.Client):
         elif felony_type == 2:
             utilities.logger.debug()
         elif felony_type == 3:
+            utilities.logger.debug()
+        elif felony_type == 4:
             utilities.logger.debug()
 
 
@@ -115,10 +119,28 @@ async def warn_user(configuration, context, args):
                 role = get_role(guild=context.guild, roleId=configuration.warning_role)
                 if role:
                     await user.add_roles(role, reason=reason)
-            functions.create_penalty(guildId=context.guild.id, userId=user.id, reason=reason, type=FelonyType.WARNING)
+            functions.create_penalty(context=context, user=user, reason=reason, felony_type=FelonyType.WARNING)
             await user.send(embed=embed)
     else:
         await send_error(context.channel, "Reason for warn is missing!")
+
+
+async def mute_user(configuration, context, args):
+    if len(args) > 3:
+        user = await context.guild.fetch_member(clean_user_id(args[2]))
+        reason = ' '.join(map(str, args[3:]))
+        if user:
+            embed = get_embed(title="Mute", description=f"You've been muted!", color=discord.Color.dark_gold())
+            embed.add_field(name="Reason", value=f"{reason}", inline=False)
+            embed.set_author(name=context.author.name, icon_url=context.author.avatar_url)
+            if configuration.mute_role:
+                role = get_role(guild=context.guild, roleId=configuration.mute_role)
+                if role:
+                    await user.add_roles(role, reason=reason)
+            functions.create_penalty(context=context, user=user, reason=reason, felony_type=FelonyType.MUTE)
+            await user.send(embed=embed)
+    else:
+        await send_error(context.channel, "Reason for mute is missing!")
 
 
 async def update_channel(configuration, context, value_to_update):
@@ -226,10 +248,6 @@ async def send_configuration(configuration, channel):
 
 def get_channel(context, id):
     return [x for x in context.guild.channels if x.id == int(id)][0]
-
-
-def get_role(context, id):
-    return [x for x in context.guild.roles if x.id == int(id)][0]
 
 
 def get_user(context, id):

@@ -24,6 +24,7 @@ utilities.logger.debug(f'Argument List: {str(sys.argv)}')
 async def on_ready():
     utilities.logger.info(f'{client.user} has connected to Discord!')
     client.loop.create_task(check_warning_task())
+    client.loop.create_task(check_muted_task())
 
 
 async def check_warning_task():
@@ -34,7 +35,18 @@ async def check_warning_task():
             utilities.logger.debug(f"Got these WARNING {felonies}")
             if len(felonies) > 0:
                 await client.remove_felony(guild=guild, felonies=list(felonies), felony_type=FelonyType.WARNING.value)
-        await asyncio.sleep(10)
+        await asyncio.sleep(600)
+
+
+async def check_muted_task():
+    while True:
+        for guild in client.guilds:
+            utilities.logger.debug(f"Searching MUTE felonies for guild {guild.id}")
+            felonies = list(await functions.read_felonies(guild.id, FelonyType.MUTE.value))
+            utilities.logger.debug(f"Got these MUTE {felonies}")
+            if len(felonies) > 0:
+                await client.remove_felony(guild=guild, felonies=list(felonies), felony_type=FelonyType.MUTE.value)
+        await asyncio.sleep(600)
 
 
 @client.event
