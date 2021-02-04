@@ -85,7 +85,7 @@ async def config_manager(args, configuration, message):
 
         elif args[2] == "mute_role_timer":
             await update_mute_role_timer(configuration=configuration, context=message,
-                                   value_to_update=args[3])
+                                         value_to_update=args[3])
             return
 
     await send_configuration(configuration=configuration, channel=message.channel)
@@ -106,16 +106,19 @@ def clean_user_id(user_id):
 async def warn_user(configuration, context, args):
     if len(args) > 3:
         user = await context.guild.fetch_member(clean_user_id(args[2]))
+        reason = ' '.join(map(str, args[3:]))
         if user:
             embed = get_embed(title="Warning", description=f"You've been warned!", color=discord.Color.gold())
-            embed.add_field(name="Reason", value=f"{args[3]}", inline=False)
+            embed.add_field(name="Reason", value=f"{reason}", inline=False)
             embed.set_author(name=context.author.name, icon_url=context.author.avatar_url)
             if configuration.warning_role:
                 role = get_role(guild=context.guild, roleId=configuration.warning_role)
                 if role:
-                    await user.add_roles(role, reason=args[3])
-            functions.create_penalty(guildId=context.guild.id, userId=user.id, reason=args[3], type=FelonyType.WARNING)
+                    await user.add_roles(role, reason=reason)
+            functions.create_penalty(guildId=context.guild.id, userId=user.id, reason=reason, type=FelonyType.WARNING)
             await user.send(embed=embed)
+    else:
+        await send_error(context.channel, "Reason for warn is missing!")
 
 
 async def update_channel(configuration, context, value_to_update):
