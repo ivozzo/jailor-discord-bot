@@ -1,7 +1,9 @@
 from pymongo import MongoClient
 from classes.bot_configuration import BotConfiguration
+from classes.bot_felony import BotFelony
 import modules.configuration as configuration
 import modules.utilities as utilities
+import datetime
 
 database = None
 
@@ -23,6 +25,7 @@ def update_configuration(guildId, item, value):
     collection = get_configuration_repository()
     return collection.update_many({"guildId": guildId}, {"$set": {item: value}})
 
+
 def read_configuration(guildId):
     collection = get_configuration_repository()
     return collection.find_one({"guildId": guildId})
@@ -31,6 +34,42 @@ def read_configuration(guildId):
 def remove_configuration(guildId):
     collection = get_configuration_repository()
     return collection.delete_many({"guildId": guildId})
+
+
+def create_penalty(guildId, userId, reason, type):
+    collection = get_felony_repository()
+    previous_bot_felony = read_felony(guildId, userId, type.value)
+    if not previous_bot_felony:
+        bot_felony = BotFelony(guildId=guildId, userId=userId, type=type, reason=reason)
+        utilities.logger.debug(f"Saving felony {str(bot_felony)} onto {collection}")
+        collection.insert_one(bot_felony.to_dict())
+        return bot_felony
+    else:
+        utilities.logger.debug(f"Felony for {str(userId)} in {str(guildId)} already existing in {collection}")
+        return BotFelony.from_dict(previous_bot_felony)
+
+
+async def read_felonies(guildId, felonyType):
+    collection = get_felony_repository()
+    configuration = BotConfiguration.from_dict(read_configuration(guildId))
+    return collection.find({"guildId": guildId, "type": felonyType,
+                            "timestamp": {"$lte": (datetime.datetime.now() - datetime.timedelta(
+                                hours=int(configuration.warning_role_timer))).timestamp()}})
+
+
+def read_felony(guildId, userId, type):
+    collection = get_felony_repository()
+    return collection.find_one({"guildId": guildId, "userId": userId, "type": type})
+
+
+async def delete_felony(guildId, userId, type):
+    collection = get_felony_repository()
+    return collection.delete_many({"guildId": guildId, "userId": userId, "type": type})
+
+
+def get_felony_repository():
+    target_collection = configuration.database["felony_repository"]
+    return database[target_collection]
 
 
 def get_configuration_repository():

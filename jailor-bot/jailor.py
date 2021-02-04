@@ -1,10 +1,11 @@
+import asyncio
 import sys
 
-from classes.bot_configuration import BotConfiguration
 import modules.configuration as configuration
-import modules.utilities as utilities
 import modules.functions as functions
+import modules.utilities as utilities
 from classes.bot import JailorBot
+from enums.felony_type import FelonyType
 
 client = JailorBot()
 
@@ -22,6 +23,18 @@ utilities.logger.debug(f'Argument List: {str(sys.argv)}')
 @client.event
 async def on_ready():
     utilities.logger.info(f'{client.user} has connected to Discord!')
+    client.loop.create_task(check_warning_task())
+
+
+async def check_warning_task():
+    while True:
+        for guild in client.guilds:
+            utilities.logger.debug(f"Searching WARNING felonies for guild {guild.id}")
+            felonies = list(await functions.read_felonies(guild.id, FelonyType.WARNING.value))
+            utilities.logger.debug(f"Got these WARNING {felonies}")
+            if len(felonies) > 0:
+                await client.remove_felony(guild=guild, felonies=list(felonies), felony_type=FelonyType.WARNING.value)
+        await asyncio.sleep(10)
 
 
 @client.event

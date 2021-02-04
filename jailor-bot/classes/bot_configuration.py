@@ -4,10 +4,10 @@ class BotConfiguration:
         self.role = args.get("role")
         self.command_channel = args.get("command_channel")
         self.command_prefix = args.get("command_prefix", 'j!')
-        self.warning_role = args.get("default_role")
-        self.warning_role_timer = args.get("default_role_timer", "1d")
+        self.warning_role = args.get("warning_role")
+        self.warning_role_timer = args.get("warning_role_timer", "24")
         self.mute_role = args.get("mute_role")
-        self.mute_role_timer = args.get("default_role_timer", "1d")
+        self.mute_role_timer = args.get("mute_role_timer", "48")
 
     def to_dict(self):
         return {

@@ -3,6 +3,7 @@ import modules.functions as functions
 import modules.utilities as utilities
 import traceback
 from classes.bot_configuration import BotConfiguration
+from enums.felony_type import FelonyType
 
 
 class JailorBot(discord.Client):
@@ -31,9 +32,25 @@ class JailorBot(discord.Client):
             elif args[1] == "warn":
                 await warn_user(configuration=conf, context=message, args=args)
             else:
-                await send_error(message.channel)
+                await send_error(message.channel, "Command not found!")
         else:
             return
+
+    async def remove_felony(self, guild, felonies, felony_type):
+        configuration = BotConfiguration.from_dict(functions.read_configuration(guild.id))
+        if felony_type == 1:
+            for felony in felonies:
+                user = await guild.fetch_member(felony["userId"])
+                if user:
+                    if configuration.warning_role:
+                        role = get_role(guild=guild, roleId=configuration.warning_role)
+                        if role:
+                            await user.remove_roles(role, reason="Felony expired")
+            await functions.delete_felony(guild.id, felony["userId"], felony_type)
+        elif felony_type == 2:
+            utilities.logger.debug()
+        elif felony_type == 3:
+            utilities.logger.debug()
 
 
 async def config_manager(args, configuration, message):
@@ -55,8 +72,19 @@ async def config_manager(args, configuration, message):
             await update_warning_role(configuration=configuration, context=message,
                                       value_to_update=args[3])
             return
+
+        elif args[2] == "warning_role_timer":
+            await update_warning_role_timer(configuration=configuration, context=message,
+                                            value_to_update=args[3])
+            return
+
         elif args[2] == "mute_role":
             await update_mute_role(configuration=configuration, context=message,
+                                   value_to_update=args[3])
+            return
+
+        elif args[2] == "mute_role_timer":
+            await update_mute_role_timer(configuration=configuration, context=message,
                                    value_to_update=args[3])
             return
 
@@ -83,7 +111,10 @@ async def warn_user(configuration, context, args):
             embed.add_field(name="Reason", value=f"{args[3]}", inline=False)
             embed.set_author(name=context.author.name, icon_url=context.author.avatar_url)
             if configuration.warning_role:
-                await user.add_roles(roles={int(clean_role_id(configuration.warning_role))}, reason=args[3])
+                role = get_role(guild=context.guild, roleId=configuration.warning_role)
+                if role:
+                    await user.add_roles(role, reason=args[3])
+            functions.create_penalty(guildId=context.guild.id, userId=user.id, reason=args[3], type=FelonyType.WARNING)
             await user.send(embed=embed)
 
 
@@ -111,6 +142,24 @@ async def update_role(configuration, context, value_to_update):
             await send_done(channel=context.channel, description="Role check updated")
 
 
+async def update_warning_role_timer(configuration, context, value_to_update):
+    if not value_to_update.isnumeric():
+        await send_error(context.channel, "The specified value is not numeric")
+    else:
+        functions.update_configuration(guildId=configuration.guildId, item="warning_role_timer",
+                                       value=int(value_to_update))
+        await send_done(channel=context.channel, description="Timer for warned users updated")
+
+
+async def update_mute_role_timer(configuration, context, value_to_update):
+    if not value_to_update.isnumeric():
+        await send_error(context.channel, "The specified value is not numeric")
+    else:
+        functions.update_configuration(guildId=configuration.guildId, item="mute_role_timer",
+                                       value=int(value_to_update))
+        await send_done(channel=context.channel, description="Timer for muted users updated")
+
+
 async def update_warning_role(configuration, context, value_to_update):
     if get_role(context, clean_role_id(value_to_update)) in context.guild.roles:
         configuration.warning_role = value_to_update
@@ -131,9 +180,9 @@ async def update_prefix(configuration, context, value_to_update):
     await send_done(channel=context.channel, description="Command prefix updated")
 
 
-async def send_error(channel):
+async def send_error(channel, description):
     title = f"Error"
-    description = "Command not found"
+    description = description
     embed = get_embed(title=title, description=description, color=discord.Color.red())
     await channel.send(embed=embed)
 
@@ -182,6 +231,14 @@ def get_role(context, id):
 
 def get_user(context, id):
     return [x for x in context.guild.members if x.id == int(id)][0]
+
+
+def get_role(guild, roleId):
+    role = [x for x in guild.roles if x.id == int(clean_role_id(roleId))]
+    if len(role) > 0:
+        return role[0]
+    else:
+        return None
 
 
 def get_embed(title, description, color):
