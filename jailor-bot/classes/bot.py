@@ -244,6 +244,11 @@ async def send_commands_list(prefix, channel):
     embed = get_embed(title=title, description=description, color=discord.Colour.dark_green())
     embed.add_field(name=f"{prefix} help", value="Show this message", inline=False)
     embed.add_field(name=f"{prefix} config", value="Show the actual configuration for your server", inline=False)
+    embed.add_field(name=f"{prefix} warn <user> <reason>", value="Warn user (role must be configured)", inline=False)
+    embed.add_field(name=f"{prefix} mute <user> <reason>", value="Mute user (role must be configured)",
+                    inline=False)
+    embed.add_field(name=f"{prefix} unmute <user>", value="Unmute user and remove mute role",
+                    inline=False)
     await channel.send(embed=embed)
 
 
@@ -263,6 +268,21 @@ async def send_configuration(configuration, channel):
                     value=f"Current: {configuration.command_channel if configuration.command_channel else 'unset'}\n"
                           f"Set or remove which channel the bot will use to read commands", inline=False)
 
+    embed.add_field(name=f"{configuration.command_prefix} config warning_role <@role>",
+                    value=f"Current: {configuration.warning_role if configuration.warning_role else 'unset'}\n"
+                          f"Set the role the user will gain upon calling the warn command", inline=False)
+
+    embed.add_field(name=f"{configuration.command_prefix} config warning_role_timer <hours>",
+                    value=f"Current: {configuration.warning_role_timer if configuration.warning_role_timer else 'unset'}\n"
+                          f"Set the timer in hours after which a warned user will lose the role", inline=False)
+
+    embed.add_field(name=f"{configuration.command_prefix} config mute_role <@role>",
+                    value=f"Current: {configuration.mute_role if configuration.mute_role else 'unset'}\n"
+                          f"Set the role the user will gain upon calling the mute command", inline=False)
+
+    embed.add_field(name=f"{configuration.command_prefix} config mute_role_timer <hours>",
+                    value=f"Current: {configuration.mute_role_timer if configuration.mute_role_timer else 'unset'}\n"
+                          f"Set the timer in hours after which a muted user will lose the role", inline=False)
     await channel.send(embed=embed)
 
 
