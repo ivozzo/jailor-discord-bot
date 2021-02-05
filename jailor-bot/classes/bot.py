@@ -33,6 +33,8 @@ class JailorBot(discord.Client):
                 await add_user_felony(configuration=conf, context=message, args=args, felony_type=FelonyType.WARNING)
             elif args[1] == "mute":
                 await add_user_felony(configuration=conf, context=message, args=args, felony_type=FelonyType.MUTE)
+            elif args[1] == "unmute":
+                await remove_user_felony(configuration=conf, context=message, args=args, felony_type=FelonyType.MUTE)
             else:
                 await send_error(message.channel, "Command not found!")
         else:
@@ -151,6 +153,14 @@ async def add_user_felony(configuration, context, args, felony_type):
             await user.send(embed=embed)
     else:
         await send_error(context.channel, "Reason for felony is missing!")
+
+
+async def remove_user_felony(configuration, context, args, felony_type):
+    user = await context.guild.fetch_member(clean_user_id(args[2]))
+    role = get_role(guild=context.guild, roleId=configuration.mute_role)
+    if user and role:
+        await user.remove_roles(role, reason="Felony upgrade")
+    await functions.delete_felony(context.guild.id, user.id, felony_type.value)
 
 
 async def update_channel(configuration, context, value_to_update):
