@@ -26,6 +26,12 @@ def update_configuration(guildId, item, value):
     return collection.update_many({"guildId": guildId}, {"$set": {item: value}})
 
 
+def update_felony(guildId, userId, previous_felony_type, reason, new_felony_type):
+    collection = get_felony_repository()
+    return collection.update_many({"guildId": guildId, "userId": userId, "type": previous_felony_type}, {
+        "$set": {"reason": reason, "type": new_felony_type, "timestamp": datetime.datetime.now().timestamp()}})
+
+
 def read_configuration(guildId):
     collection = get_configuration_repository()
     return collection.find_one({"guildId": guildId})
@@ -36,7 +42,7 @@ def remove_configuration(guildId):
     return collection.delete_many({"guildId": guildId})
 
 
-def create_penalty(context, user, reason, felony_type):
+def create_felony(context, user, reason, felony_type):
     collection = get_felony_repository()
     previous_bot_felony = read_felony(context.guild.id, user.id, felony_type.value)
     if not previous_bot_felony:

@@ -109,24 +109,45 @@ async def add_user_felony(configuration, context, args, felony_type):
         user = await context.guild.fetch_member(clean_user_id(args[2]))
         reason = ' '.join(map(str, args[3:]))
 
-        role = None
+        previous_role = None
+        target_role = None
         title = ""
         description = ""
-        if felony_type == FelonyType.WARNING and configuration.warning_role:
-            role = get_role(guild=context.guild, roleId=configuration.warning_role)
-            title = "Warning"
-            description = "You've been warned!"
-        if felony_type == FelonyType.MUTE and configuration.mute_role:
-            role = get_role(guild=context.guild, roleId=configuration.mute_role)
-            title = "Mute"
-            description = "You've been muted!"
+        previous_felony = None
+        warning_role = get_role(guild=context.guild, roleId=configuration.warning_role)
+        mute_role = get_role(guild=context.guild, roleId=configuration.mute_role)
+
         if user:
+            if felony_type == FelonyType.WARNING and configuration.warning_role:
+                previous_felony = functions.read_felony(context.guild.id, user.id, felony_type.value)
+                if previous_felony:
+                    title = "Mute"
+                    description = "You've been muted!"
+                    previous_role = warning_role
+                    target_role = mute_role
+                else:
+                    title = "Warning"
+                    description = "You've been warned!"
+                    target_role = warning_role
+            if felony_type == FelonyType.MUTE and configuration.mute_role:
+                title = "Mute"
+                description = "You've been muted!"
+                target_role = mute_role
             embed = get_embed(title=title, description=description, color=discord.Color.gold())
             embed.add_field(name="Reason", value=f"{reason}", inline=False)
             embed.set_author(name=context.author.name, icon_url=context.author.avatar_url)
-            if role:
-                await user.add_roles(role, reason=reason)
-            functions.create_penalty(context=context, user=user, reason=reason, felony_type=felony_type)
+
+            if previous_felony:
+                utilities.logger.info(f"Found previous felony {str(previous_felony)}")
+                functions.update_felony(context.guild.id, user.id, felony_type.value, reason, felony_type.value + 1)
+            else:
+                functions.create_felony(context=context, user=user, reason=reason, felony_type=felony_type)
+
+            if target_role and previous_felony:
+                await user.add_roles(target_role, reason=reason)
+                await user.remove_roles(previous_role, reason="Felony upgrade")
+            if target_role and not previous_felony:
+                await user.add_roles(target_role, reason=reason)
             await user.send(embed=embed)
     else:
         await send_error(context.channel, "Reason for felony is missing!")
