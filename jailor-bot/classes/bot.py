@@ -40,21 +40,18 @@ class JailorBot(discord.Client):
 
     async def remove_felony(self, guild, felonies, felony_type):
         configuration = BotConfiguration.from_dict(functions.read_configuration(guild.id))
-        if felony_type == 1:
-            for felony in felonies:
-                user = await guild.fetch_member(felony["userId"])
-                if user:
-                    if configuration.warning_role:
-                        role = get_role(guild=guild, roleId=configuration.warning_role)
-                        if role:
-                            await user.remove_roles(role, reason="Felony expired")
+        role = None
+        if felony_type == 1 and configuration.warning_role:
+            role = get_role(guild=guild, roleId=configuration.warning_role)
+
+        if felony_type == 2 and configuration.mute_role:
+            role = get_role(guild=guild, roleId=configuration.mute_role)
+
+        for felony in felonies:
+            user = await guild.fetch_member(felony["userId"])
+            if user and role:
+                await user.remove_roles(role, reason="Felony expired")
             await functions.delete_felony(guild.id, felony["userId"], felony_type)
-        elif felony_type == 2:
-            utilities.logger.debug()
-        elif felony_type == 3:
-            utilities.logger.debug()
-        elif felony_type == 4:
-            utilities.logger.debug()
 
 
 async def config_manager(args, configuration, message):
