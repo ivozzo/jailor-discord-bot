@@ -1,0 +1,8 @@
+[logging]
+path=logs
+file=jailor-trace.log
+
+[database]
+#MongoDB
+configuration_repository=guild_configuration
+felony_repository=naughty_list

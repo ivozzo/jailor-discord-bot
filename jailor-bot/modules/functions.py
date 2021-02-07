@@ -85,16 +85,13 @@ def get_configuration_repository():
     return database[target_collection]
 
 
-def connect_db(host, user, password, db, port):
-    connection_str = host.replace("<username>", user).replace("<password>", password) \
-        .replace("<port>", port).replace("<dbname>", db)
+def connect_db(host, user, password, db):
+    connection_str = host.replace("<username>", user).replace("<password>", password).replace("<dbname>", db)
     client = MongoClient(connection_str)
     return client[db]
 
 
-def init_connection():
+def init_connection(user, password, db_name, host):
     global database
 
-    database = connect_db(configuration.database["host"], configuration.database["user"],
-                          configuration.database["password"],
-                          configuration.database["name"], configuration.database["port"])
+    database = connect_db(host, user, password, db_name)

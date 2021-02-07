@@ -140,7 +140,7 @@ async def add_user_felony(configuration, context, args, felony_type):
             embed.set_author(name=context.author.name, icon_url=context.author.avatar_url)
 
             if previous_felony:
-                utilities.logger.info(f"Found previous felony {str(previous_felony)}")
+                utilities.logger.debug(f"Found previous felony {str(previous_felony)}")
                 functions.update_felony(context.guild.id, user.id, felony_type.value, reason, felony_type.value + 1)
             else:
                 functions.create_felony(context=context, user=user, reason=reason, felony_type=felony_type)
@@ -159,7 +159,7 @@ async def remove_user_felony(configuration, context, args, felony_type):
     user = await context.guild.fetch_member(clean_user_id(args[2]))
     role = get_role(guild=context.guild, roleId=configuration.mute_role)
     if user and role:
-        await user.remove_roles(role, reason="Felony upgrade")
+        await user.remove_roles(role, reason="Removing felony as request")
     await functions.delete_felony(context.guild.id, user.id, felony_type.value)
 
 

@@ -1,5 +1,7 @@
 import asyncio
 import sys
+import os
+from dotenv import load_dotenv
 
 import modules.configuration as configuration
 import modules.functions as functions
@@ -9,10 +11,13 @@ from enums.felony_type import FelonyType
 
 client = JailorBot()
 
+load_dotenv()
+token = os.getenv("JAILOR_DISCORD_TOKEN")
+logging_level = os.getenv("JAILOR_LOGGING_LEVEL")
+
 try:
-    configuration.init(sys.argv[1])
-    utilities.init_logger(configuration.logging["level"])
-    token = configuration.auth["token"]
+    configuration.init("jailor-bot/config/settings")
+    utilities.init_logger(logging_level)
 except Exception as ex:
     utilities.logger.error(ex)
 
@@ -70,6 +75,7 @@ async def on_guild_remove(guild):
 
 
 utilities.logger.info("Initializing database connection...")
-functions.init_connection()
+functions.init_connection(user=os.getenv("JAILOR_DATABASE_USER"), password=os.getenv("JAILOR_DATABASE_PASSWORD"),
+                          db_name=os.getenv("JAILOR_DATABASE"), host=os.getenv("JAILOR_DATABASE_HOST"))
 
 client.run(token)

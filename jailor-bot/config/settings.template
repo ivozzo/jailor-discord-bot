@@ -9,9 +9,5 @@ level=INFO
 [database]
 #MongoDB
 host=host
-name=name
-user=user
-password=password
-
-[metadata]
-version=0.0.1
+configuration_repository=configuration_repository
+felony_repository=felony_repository
