@@ -181,7 +181,7 @@ async def update_role(configuration, context, value_to_update):
         functions.update_configuration(guildId=configuration.guildId, item="role", value=None)
         await send_done(channel=context.channel, description="Role check disabled")
     else:
-        if get_role(context, clean_role_id(value_to_update)) in context.guild.roles:
+        if get_role(context.guild, clean_role_id(value_to_update)) in context.guild.roles:
             configuration.role = value_to_update
             functions.update_configuration(guildId=configuration.guildId, item="role", value=value_to_update)
             await send_done(channel=context.channel, description="Role check updated")
@@ -206,14 +206,14 @@ async def update_mute_role_timer(configuration, context, value_to_update):
 
 
 async def update_warning_role(configuration, context, value_to_update):
-    if get_role(context, clean_role_id(value_to_update)) in context.guild.roles:
+    if get_role(context.guild, clean_role_id(value_to_update)) in context.guild.roles:
         configuration.warning_role = value_to_update
         functions.update_configuration(guildId=configuration.guildId, item="warning_role", value=value_to_update)
         await send_done(channel=context.channel, description="Role for warned users updated")
 
 
 async def update_mute_role(configuration, context, value_to_update):
-    if get_role(context, clean_role_id(value_to_update)) in context.guild.roles:
+    if get_role(context.guild, clean_role_id(value_to_update)) in context.guild.roles:
         configuration.mute_role = value_to_update
         functions.update_configuration(guildId=configuration.guildId, item="mute_role", value=value_to_update)
         await send_done(channel=context.channel, description="Role for muted users updated")
