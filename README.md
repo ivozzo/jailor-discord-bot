@@ -1,8 +1,9 @@
 # jailor-discord-bot
+
 ## Discord bot
 
-This is a discord bot which will help you manage your community. 
-As the name implies it will reach users who does not respect your server rules and warning them (or soft banning in case of recidivist behaviour)
+This is a discord bot which will help you manage your community. As the name implies it will reach users who does not
+respect your server rules and warning them (or soft banning in case of recidivist behaviour)
 
 ## Commands
 
@@ -12,7 +13,7 @@ Command | Description
 --------|------------
 j! help | Will show a help message that will list the bot commands
 j! config | Will show a configuration recap
-j! config <prefix> <value> | Will update a configuration to the passed value 
+j! config <prefix> <value> | Will update a configuration to the passed value
 j! warn <user> <reason> | Will warn an user sending him a DM with the reason and giving them the warning role (if configured)
 j! mute <user> <reason> | Will mute an user sending him a DM with the reason and giving them the mute role (if configured)
 J! unmute <user> | Will revoke the muting directive and remove the mute role from the user
@@ -37,8 +38,24 @@ mute_role_timer <value> | Specify the duration of the mute role assignement (def
 
 **I want to invite this bot to my server**
 
-Easy peasy, just click [here](https://discord.com/api/oauth2/authorize?client_id=804454621161848853&permissions=281111798&scope=bot) and follow the procedure for inviting the bot!
+Easy peasy, just
+click [here](https://discord.com/api/oauth2/authorize?client_id=804454621161848853&permissions=281111798&scope=bot) and
+follow the procedure for inviting the bot!
+
+**Do I have to save some environment variables for the bot to function?**
+
+Absolutely, here's the required environment variables (or saved into a `.env` file):
+
+Variable | Description
+---------|------------
+JAILOR_DISCORD_TOKEN | Discord token (obtained through Discord Developer Portal)
+JAILOR_LOGGING_LEVEL | Logging level `[WARN, ERROR, INFO, DEBUG]`
+JAILOR_DATABASE_HOST | MongoDB connection string (it should be something like `mongodb://\[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]` )
+JAILOR_DATABASE | MongoDB database name
+JAILOR_DATABASE_USER | Self explanatory
+JAILOR_DATABASE_PASSWORD | Self explanatory
 
 ## Special Thanks
 
-I'd like to thank the [Stadia Italia](https://discord.gg/jJcXhYYG) community for helping me test this bot and of course, giving me a caring home for my gaming sessions!
+I'd like to thank the [Stadia Italia](https://discord.gg/jJcXhYYG) community for helping me test this bot and of course,
+giving me a caring home for my gaming sessions!
