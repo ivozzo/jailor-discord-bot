@@ -1,4 +1,5 @@
 import discord
+import asyncio
 import traceback
 from classes.bot_configuration import BotConfiguration
 from enums.felony_type import FelonyType
@@ -28,7 +29,8 @@ class JailorBot(discord.Client):
 
         if message.content.startswith(conf.command_prefix):
             args = message.content.split()
-
+            if args[0] == conf.command_prefix:
+                self.logger.debug("matched space!")
             if args[1] == "help":
                 await send_commands_list(prefix=conf.command_prefix, channel=message.channel)
             elif args[1] == "config":
@@ -41,10 +43,43 @@ class JailorBot(discord.Client):
             elif args[1] == "unmute":
                 await self.remove_user_felony(configuration=conf, context=message, args=args,
                                               felony_type=FelonyType.MUTE)
+            elif args[1] == "kick":
+                await self.kick_user(context=message, args=args)
             else:
                 await send_error(message.channel, "Command not found!")
         else:
             return
+
+    async def kick_user(self, context, args):
+        reason = ' '.join(map(str, args[3:]))
+        confirmation_message = await send_confirmation(title="Kick user",
+                                                       description="Kick user confirmation, click ✅ to confirm",
+                                                       context=context, reason=reason)
+
+        def check_confirmation(reaction, user):
+            return user == context.author and str(reaction.emoji) == "✅"
+
+        try:
+            reaction, user = await self.wait_for("reaction_add", timeout=15.0, check=check_confirmation)
+        except asyncio.TimeoutError:
+            embed = get_embed(title="Timeout", description="Timeout met for confirmation", color=discord.Color.red())
+            confirmation_message.clear_reactions()
+            await confirmation_message.edit(embed=embed)
+        else:
+            user = await context.guild.fetch_member(clean_user_id(args[2]))
+            embed = get_embed(title="Kick",
+                              description=f"You've been kicked from {context.guild.name}",
+                              color=discord.Color.dark_magenta())
+            embed.add_field(inline=False, name="Reason", value=f"{reason}")
+            await user.send(embed=embed)
+            await context.guild.kick(user=user, reason=f"{reason}")
+            embed = get_embed(title="Done",
+                              description=f"User {user.name} has been successfully kicked from {context.guild.name}",
+                              color=discord.Color.green())
+            embed.add_field(inline=False, name="Reason", value=f"{reason}")
+            await confirmation_message.edit(embed=embed)
+
+        await confirmation_message.clear_reactions()
 
     async def remove_felony(self, guild, felonies, felony_type):
         configuration = BotConfiguration.from_dict(self.database.read_configuration(guild_id=guild.id))
@@ -212,6 +247,15 @@ class JailorBot(discord.Client):
         configuration.command_prefix = value_to_update
         self.database.update_configuration(guildId=configuration.guildId, item="command_prefix", value=value_to_update)
         await send_done(channel=context.channel, description="Command prefix updated")
+
+
+async def send_confirmation(context, title, description, reason):
+    embed = get_embed(title=title, description=description, color=discord.Color.dark_magenta())
+    embed.add_field(name="Reason", inline=False, value=reason)
+    confirmation_message = await context.channel.send(embed=embed)
+    await confirmation_message.add_reaction(emoji="✅")
+    await confirmation_message.add_reaction(emoji="❎")
+    return confirmation_message
 
 
 async def send_error(channel, description):

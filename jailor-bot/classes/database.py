@@ -2,17 +2,23 @@ from boilerplate.mongodatabase import MongoDatabase
 from classes.bot_configuration import BotConfiguration
 from classes.bot_felony import BotFelony
 import datetime
+from pymongo import MongoClient
 
 
 class JailorDatabase(MongoDatabase):
     def __init__(self, host, user, password, database, felony_repository, configuration_repository, logger):
-        self.database = super().__init__(host=host, user=user, password=password, database=database)
-        self.felony_repository = self.database[felony_repository]
-        self.configuration_repository = self.database[configuration_repository]
         self.logger = logger
+        self.init_database(host=host, user=user, password=password, db_name=database)
+        self.felony_repository = self.get_collection(felony_repository)
+        self.configuration_repository = self.get_collection(configuration_repository)
+
+    def init_database(self, host, user, password, db_name):
+        self.database = MongoClient(
+            host.replace("<username>", user).replace("<password>", password).replace("<dbname>", db_name))[db_name]
+        self.logger.debug(f"Connected to {self.database}")
 
     def read_configuration(self, guild_id):
-        configuration = self.configuration_repository.find_one({{"guildId": guild_id}})
+        configuration = self.configuration_repository.find_one({"guildId": guild_id})
         if configuration:
             self.logger.debug(f"Found configuration: {str(configuration)}")
             return configuration

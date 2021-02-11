@@ -18,12 +18,12 @@ else:
 configuration.init()
 try:
     database = JailorDatabase(host=configuration.host, user=configuration.user,
-                              database=configuration.database, password=configuration.password,
+                              database=configuration.db_name, password=configuration.password,
                               felony_repository=configuration.database["felony_repository"],
                               configuration_repository=configuration.database["configuration_repository"],
                               logger=logger)
 except Exception as ex:
-    logger.error(ex)
+    raise Exception(f"Exception during database startup: {ex}")
 
 client = JailorBot(database=database, logger=logger)
 
