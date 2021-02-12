@@ -30,7 +30,12 @@ class JailorBot(discord.Client):
         if message.content.startswith(conf.command_prefix):
             args = message.content.split()
             if args[0] == conf.command_prefix:
-                self.logger.debug("matched space!")
+                self.logger.debug(f"Deleting {conf.command_prefix} from arguments")
+                # args.pop(0)
+            else:
+                self.logger.debug(f"Replacing {conf.command_prefix} from command")
+                # args[0] = args[0].replace(conf.command_prefix, "")
+            self.logger.debug(f"Command received: {args[0]} with arguments: {args[1:]}")
             if args[1] == "help":
                 await send_commands_list(prefix=conf.command_prefix, channel=message.channel)
             elif args[1] == "config":
@@ -45,8 +50,11 @@ class JailorBot(discord.Client):
                                               felony_type=FelonyType.MUTE)
             elif args[1] == "kick":
                 await self.kick_user(context=message, args=args)
+            elif args[1] == "ban":
+                await self.ban_user(context=message, args=args)
             else:
                 await send_error(message.channel, "Command not found!")
+            return
         else:
             return
 
@@ -75,6 +83,37 @@ class JailorBot(discord.Client):
             await context.guild.kick(user=user, reason=f"{reason}")
             embed = get_embed(title="Done",
                               description=f"User {user.name} has been successfully kicked from {context.guild.name}",
+                              color=discord.Color.green())
+            embed.add_field(inline=False, name="Reason", value=f"{reason}")
+            await confirmation_message.edit(embed=embed)
+
+        await confirmation_message.clear_reactions()
+
+    async def ban_user(self, context, args):
+        reason = ' '.join(map(str, args[3:]))
+        confirmation_message = await send_confirmation(title="Ban user",
+                                                       description="Ban user confirmation, click ✅ to confirm",
+                                                       context=context, reason=reason)
+
+        def check_confirmation(reaction, user):
+            return user == context.author and str(reaction.emoji) == "✅"
+
+        try:
+            reaction, user = await self.wait_for("reaction_add", timeout=15.0, check=check_confirmation)
+        except asyncio.TimeoutError:
+            embed = get_embed(title="Timeout", description="Timeout met for confirmation", color=discord.Color.red())
+            confirmation_message.clear_reactions()
+            await confirmation_message.edit(embed=embed)
+        else:
+            user = await context.guild.fetch_member(clean_user_id(args[2]))
+            embed = get_embed(title="Ban",
+                              description=f"You've been banned from {context.guild.name}",
+                              color=discord.Color.dark_magenta())
+            embed.add_field(inline=False, name="Reason", value=f"{reason}")
+            await user.send(embed=embed)
+            await context.guild.ban(user=user, reason=f"{reason}", delete_message_days=0)
+            embed = get_embed(title="Done",
+                              description=f"User {user.name} has been successfully banned from {context.guild.name}",
                               color=discord.Color.green())
             embed.add_field(inline=False, name="Reason", value=f"{reason}")
             await confirmation_message.edit(embed=embed)
@@ -277,11 +316,17 @@ async def send_commands_list(prefix, channel):
     embed = get_embed(title=title, description=description, color=discord.Colour.dark_green())
     embed.add_field(name=f"{prefix} help", value="Show this message", inline=False)
     embed.add_field(name=f"{prefix} config", value="Show the actual configuration for your server", inline=False)
+    embed.add_field(name=f"{prefix} config <prefix> <value>", value="Update the prefix configuration", inline=False)
     embed.add_field(name=f"{prefix} warn <user> <reason>", value="Warn user (role must be configured)", inline=False)
     embed.add_field(name=f"{prefix} mute <user> <reason>", value="Mute user (role must be configured)",
                     inline=False)
     embed.add_field(name=f"{prefix} unmute <user>", value="Unmute user and remove mute role",
                     inline=False)
+    embed.add_field(name=f"{prefix} kick <user> <reason>", value="Kick selected user from server",
+                    inline=False)
+    embed.add_field(name=f"{prefix} ban <user> <reason>", value="Ban selected user from server",
+                    inline=False)
+    embed.add_field(name="Legend", value="< > = mandatory parameter", inline=False)
     await channel.send(embed=embed)
 
 
