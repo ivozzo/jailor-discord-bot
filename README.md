@@ -2,6 +2,8 @@
 
 ## Discord bot
 
+![](images/jailor.png)
+
 This is a discord bot which will help you manage your community. As the name implies it will reach users who does not
 respect your server rules and warning them (or soft banning in case of recidivist behaviour)
 
@@ -59,3 +61,5 @@ JAILOR_DATABASE_PASSWORD | Self explanatory
 
 I'd like to thank the [Stadia Italia](https://discord.gg/jJcXhYYG) community for helping me test this bot and of course,
 giving me a caring home for my gaming sessions!
+
+I'd also like to thank [Deps Design](https://www.instagram.com/deps.design/) for the awesome bot avatar! Run check her portfolio!
