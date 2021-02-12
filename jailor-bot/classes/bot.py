@@ -31,26 +31,26 @@ class JailorBot(discord.Client):
             args = message.content.split()
             if args[0] == conf.command_prefix:
                 self.logger.debug(f"Deleting {conf.command_prefix} from arguments")
-                # args.pop(0)
+                args.pop(0)
             else:
                 self.logger.debug(f"Replacing {conf.command_prefix} from command")
-                # args[0] = args[0].replace(conf.command_prefix, "")
+                args[0] = args[0].replace(conf.command_prefix, "")
             self.logger.debug(f"Command received: {args[0]} with arguments: {args[1:]}")
-            if args[1] == "help":
+            if args[0] == "help":
                 await send_commands_list(prefix=conf.command_prefix, channel=message.channel)
-            elif args[1] == "config":
+            elif args[0] == "config":
                 await self.config_manager(args=args, configuration=conf, message=message)
-            elif args[1] == "warn":
+            elif args[0] == "warn":
                 await self.add_user_felony(configuration=conf, context=message, args=args,
                                            felony_type=FelonyType.WARNING)
-            elif args[1] == "mute":
+            elif args[0] == "mute":
                 await self.add_user_felony(configuration=conf, context=message, args=args, felony_type=FelonyType.MUTE)
-            elif args[1] == "unmute":
+            elif args[0] == "unmute":
                 await self.remove_user_felony(configuration=conf, context=message, args=args,
                                               felony_type=FelonyType.MUTE)
-            elif args[1] == "kick":
+            elif args[0] == "kick":
                 await self.kick_user(context=message, args=args)
-            elif args[1] == "ban":
+            elif args[0] == "ban":
                 await self.ban_user(context=message, args=args)
             else:
                 await send_error(message.channel, "Command not found!")
@@ -59,7 +59,7 @@ class JailorBot(discord.Client):
             return
 
     async def kick_user(self, context, args):
-        reason = ' '.join(map(str, args[3:]))
+        reason = ' '.join(map(str, args[2:]))
         confirmation_message = await send_confirmation(title="Kick user",
                                                        description="Kick user confirmation, click ✅ to confirm",
                                                        context=context, reason=reason)
@@ -74,7 +74,7 @@ class JailorBot(discord.Client):
             confirmation_message.clear_reactions()
             await confirmation_message.edit(embed=embed)
         else:
-            user = await context.guild.fetch_member(clean_user_id(args[2]))
+            user = await context.guild.fetch_member(clean_user_id(args[1]))
             embed = get_embed(title="Kick",
                               description=f"You've been kicked from {context.guild.name}",
                               color=discord.Color.dark_magenta())
@@ -90,7 +90,7 @@ class JailorBot(discord.Client):
         await confirmation_message.clear_reactions()
 
     async def ban_user(self, context, args):
-        reason = ' '.join(map(str, args[3:]))
+        reason = ' '.join(map(str, args[2:]))
         confirmation_message = await send_confirmation(title="Ban user",
                                                        description="Ban user confirmation, click ✅ to confirm",
                                                        context=context, reason=reason)
@@ -105,7 +105,7 @@ class JailorBot(discord.Client):
             confirmation_message.clear_reactions()
             await confirmation_message.edit(embed=embed)
         else:
-            user = await context.guild.fetch_member(clean_user_id(args[2]))
+            user = await context.guild.fetch_member(clean_user_id(args[1]))
             embed = get_embed(title="Ban",
                               description=f"You've been banned from {context.guild.name}",
                               color=discord.Color.dark_magenta())
@@ -137,45 +137,45 @@ class JailorBot(discord.Client):
 
     async def config_manager(self, args, configuration, message):
         self.logger.debug(args)
-        if len(args) > 3:
-            if args[2] == "command_channel":
+        if len(args) > 2:
+            if args[1] == "command_channel":
                 await self.update_channel(configuration=configuration, context=message,
-                                          value_to_update=args[3])
+                                          value_to_update=args[2])
                 return
-            elif args[2] == "command_prefix":
+            elif args[1] == "command_prefix":
                 await self.update_prefix(configuration=configuration, context=message,
-                                         value_to_update=args[3])
+                                         value_to_update=args[2])
                 return
-            elif args[2] == "role":
+            elif args[1] == "role":
                 await self.update_role(configuration=configuration, context=message,
-                                       value_to_update=args[3])
+                                       value_to_update=args[2])
                 return
-            elif args[2] == "warning_role":
+            elif args[1] == "warning_role":
                 await self.update_warning_role(configuration=configuration, context=message,
-                                               value_to_update=args[3])
+                                               value_to_update=args[2])
                 return
 
-            elif args[2] == "warning_role_timer":
+            elif args[1] == "warning_role_timer":
                 await self.update_warning_role_timer(configuration=configuration, context=message,
-                                                     value_to_update=args[3])
+                                                     value_to_update=args[2])
                 return
 
-            elif args[2] == "mute_role":
+            elif args[1] == "mute_role":
                 await self.update_mute_role(configuration=configuration, context=message,
-                                            value_to_update=args[3])
+                                            value_to_update=args[2])
                 return
 
-            elif args[2] == "mute_role_timer":
+            elif args[1] == "mute_role_timer":
                 await self.update_mute_role_timer(configuration=configuration, context=message,
-                                                  value_to_update=args[3])
+                                                  value_to_update=args[2])
                 return
 
         await send_configuration(configuration=configuration, channel=message.channel)
 
     async def add_user_felony(self, configuration, context, args, felony_type):
-        if len(args) > 3:
-            user = await context.guild.fetch_member(clean_user_id(args[2]))
-            reason = ' '.join(map(str, args[3:]))
+        if len(args) > 2:
+            user = await context.guild.fetch_member(clean_user_id(args[1]))
+            reason = ' '.join(map(str, args[2:]))
 
             previous_role = None
             target_role = None
@@ -224,7 +224,7 @@ class JailorBot(discord.Client):
             await send_error(context.channel, "Reason for felony is missing!")
 
     async def remove_user_felony(self, configuration, context, args, felony_type):
-        user = await context.guild.fetch_member(clean_user_id(args[2]))
+        user = await context.guild.fetch_member(clean_user_id(args[1]))
         role = get_role(guild=context.guild, roleId=configuration.mute_role)
         if user and role:
             await user.remove_roles(role, reason="Removing felony as request")
@@ -233,31 +233,31 @@ class JailorBot(discord.Client):
     async def update_channel(self, configuration, context, value_to_update):
         if value_to_update == "disable":
             configuration.command_channel = None
-            self.database.update_configuration(guildId=configuration.guildId, item="command_channel", value=None)
+            self.database.update_configuration(guild_id=configuration.guildId, item="command_channel", value=None)
             await send_done(channel=context.channel, description="Command channel disabled")
         else:
             if get_channel(context, clean_channel_id(value_to_update)):
                 configuration.command_channel = value_to_update
-                self.database.update_configuration(guildId=configuration.guildId, item="command_channel",
+                self.database.update_configuration(guild_id=configuration.guildId, item="command_channel",
                                                    value=value_to_update)
                 await send_done(channel=context.channel, description="Command channel updated")
 
     async def update_role(self, configuration, context, value_to_update):
         if value_to_update == "disable":
             configuration.role = None
-            self.database.update_configuration(guildId=configuration.guildId, item="role", value=None)
+            self.database.update_configuration(guild_id=configuration.guildId, item="role", value=None)
             await send_done(channel=context.channel, description="Role check disabled")
         else:
             if get_role(context.guild, clean_role_id(value_to_update)) in context.guild.roles:
                 configuration.role = value_to_update
-                self.database.update_configuration(guildId=configuration.guildId, item="role", value=value_to_update)
+                self.database.update_configuration(guild_id=configuration.guildId, item="role", value=value_to_update)
                 await send_done(channel=context.channel, description="Role check updated")
 
     async def update_warning_role_timer(self, configuration, context, value_to_update):
         if not value_to_update.isnumeric():
             await send_error(context.channel, "The specified value is not numeric")
         else:
-            self.database.update_configuration(guildId=configuration.guildId, item="warning_role_timer",
+            self.database.update_configuration(guild_id=configuration.guildId, item="warning_role_timer",
                                                value=int(value_to_update))
             await send_done(channel=context.channel, description="Timer for warned users updated")
 
@@ -265,26 +265,26 @@ class JailorBot(discord.Client):
         if not value_to_update.isnumeric():
             await send_error(context.channel, "The specified value is not numeric")
         else:
-            self.database.update_configuration(guildId=configuration.guildId, item="mute_role_timer",
+            self.database.update_configuration(guild_id=configuration.guildId, item="mute_role_timer",
                                                value=int(value_to_update))
             await send_done(channel=context.channel, description="Timer for muted users updated")
 
     async def update_warning_role(self, configuration, context, value_to_update):
         if get_role(context.guild, clean_role_id(value_to_update)) in context.guild.roles:
             configuration.warning_role = value_to_update
-            self.database.update_configuration(guildId=configuration.guildId, item="warning_role",
+            self.database.update_configuration(guild_id=configuration.guildId, item="warning_role",
                                                value=value_to_update)
             await send_done(channel=context.channel, description="Role for warned users updated")
 
     async def update_mute_role(self, configuration, context, value_to_update):
         if get_role(context.guild, clean_role_id(value_to_update)) in context.guild.roles:
             configuration.mute_role = value_to_update
-            self.database.update_configuration(guildId=configuration.guildId, item="mute_role", value=value_to_update)
+            self.database.update_configuration(guild_id=configuration.guildId, item="mute_role", value=value_to_update)
             await send_done(channel=context.channel, description="Role for muted users updated")
 
     async def update_prefix(self, configuration, context, value_to_update):
         configuration.command_prefix = value_to_update
-        self.database.update_configuration(guildId=configuration.guildId, item="command_prefix", value=value_to_update)
+        self.database.update_configuration(guild_id=configuration.guildId, item="command_prefix", value=value_to_update)
         await send_done(channel=context.channel, description="Command prefix updated")
 
 

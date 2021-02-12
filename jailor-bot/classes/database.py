@@ -28,7 +28,7 @@ class JailorDatabase(MongoDatabase):
 
     def remove_configuration(self, guild_id):
         deleted = self.configuration_repository.delete_many({"guildId": guild_id}).deleted_count
-        if deleted > 0:
+        if deleted.deleted_count > 0:
             self.logger.info(f"Deleted {deleted} configuration for guild {guild_id}")
             return True
         else:
@@ -37,7 +37,7 @@ class JailorDatabase(MongoDatabase):
 
     def update_configuration(self, guild_id, item, value):
         updated = self.configuration_repository.update_many({"guildId": guild_id}, {"$set": {item: value}})
-        if updated > 0:
+        if updated.modified_count > 0:
             self.logger.info(f"Updated configuration for guild {guild_id}")
             self.logger.debug(f"==> updated item {item} with value {value}")
             return True
@@ -75,7 +75,7 @@ class JailorDatabase(MongoDatabase):
 
     async def delete_felony(self, guild_id, user_id, felony_type):
         deleted = self.felony_repository.delete_many({"guildId": guild_id, "userId": user_id, "type": felony_type})
-        if deleted > 0:
+        if deleted.deleted_count > 0:
             self.logger.info(f"Deleted {deleted} felonies for user {user_id} in guild {guild_id}")
             return True
         else:
@@ -86,7 +86,7 @@ class JailorDatabase(MongoDatabase):
         updated = self.felony_repository.update_many(
             {"guildId": guild_id, "userId": user_id, "type": previous_felony_type}, {
                 "$set": {"reason": reason, "type": new_felony_type, "timestamp": datetime.datetime.now().timestamp()}})
-        if updated > 0:
+        if updated.modified_count > 0:
             self.logger.info(f"Updated felonies for user {user_id} in {guild_id}")
             self.logger.debug(f"==> updated felony value {previous_felony_type} with value {new_felony_type}")
             return True
