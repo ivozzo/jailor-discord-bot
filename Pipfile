@@ -8,6 +8,7 @@ name = "pypi"
 dnspython = "*"
 pymongo = "*"
 python-dotenv = "*"
+ivozzo-pyboilerplate = "*"
 
 [dev-packages]
 
